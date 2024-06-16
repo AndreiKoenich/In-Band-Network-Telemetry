@@ -5,7 +5,7 @@ import sys
 TYPE_IPV4 = 0x800
 TYPE_INT_PAI = 0x1212
 
-TAMANHO_INT_PAI_BYTES = 8
+TAMANHO_INT_PAI_BYTES = 9
 TAMANHO_INT_FILHO_BYTES = 13
 
 from scapy.all import (
@@ -73,10 +73,13 @@ def handle_pkt(pkt):
         tcp_payload = bytes(tcp_header.payload)
         tamanho_filho = int.from_bytes(tcp_payload[:4], byteorder='big')
         quantidade_filhos = int.from_bytes(tcp_payload[4:8], byteorder='big')
+        MTU_overflow_bits = bytes_to_bits_binary(tcp_payload[8:9])
+        MTU_overflow_flag = MTU_overflow_bits[0]
 
         print("\n###[ IntPai ]###\n")
         print(f"\tTamanho_Filho = {tamanho_filho}")
         print(f"\tQuantidade_Filhos = {quantidade_filhos}")
+        print(f"\tMTU_overflow = {MTU_overflow_flag}")
 
         # Imprime os cabeçalhos IntFilho
         tcp_payload_filhos = tcp_payload[TAMANHO_INT_PAI_BYTES:]
