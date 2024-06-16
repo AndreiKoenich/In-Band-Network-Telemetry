@@ -102,41 +102,31 @@ def handle_pkt(pkt):
 
         # Imprime o cabeçalho IntPai
         tcp_payload = bytes(tcp_header.payload)
-        print("\n###[ IntPai ]###\n")
         tamanho_filho = int.from_bytes(tcp_payload[:4], byteorder='big')
-        print(f"\tTamanho_Filho = {tamanho_filho}")
         quantidade_filhos = int.from_bytes(tcp_payload[4:8], byteorder='big')
+
+        print("\n###[ IntPai ]###\n")
+        print(f"\tTamanho_Filho = {tamanho_filho}")
         print(f"\tQuantidade_Filhos = {quantidade_filhos}")
 
         # Imprime os cabeçalhos IntFilho
         tcp_payload_filhos = tcp_payload[TAMANHO_INT_PAI_BYTES:]
         for index in range (0,quantidade_filhos):
-            print("\n###[ IntFilho ]###\n")
-            bits_filho = bytes_to_bits_binary(tcp_payload_filhos[(index*TAMANHO_INT_FILHO_BYTES):((index+1)*TAMANHO_INT_FILHO_BYTES)])
+
+            limite_inferior_bytes = index*TAMANHO_INT_FILHO_BYTES
+            limite_superior_bytes = (index+1)*TAMANHO_INT_FILHO_BYTES
+            bits_filho = bytes_to_bits_binary(tcp_payload_filhos[limite_inferior_bytes:limite_superior_bytes])
+
+            print("\n###[ IntFilho - SWITCH", int(bits_filho[:32],2),"]###\n")
             print(f"\tID_Switch = {int(bits_filho[:32],2)}")
             print(f"\tPorta_entrada = {int(bits_filho[32:41],2)}")
             print(f"\tPorta_saida = {int(bits_filho[41:50],2)}")
             print(f"\tTimestamp = {int(bits_filho[50:98],2)}")
 
-        #pkt[IP].show()
-        #pkt[TCP].show()
-        #pkt.show2()
-        #hexdump(pkt)
-
-        #tcp_header = pkt[TCP]
-
-        #print("###[ Payload dos Filhos]###")
-        #hexdump(tcp_payload_filhos)
-
-        #print("###[ Payload do Primeiro Filho]###")
-        #hexdump(tcp_payload_filhos[(0*TAMANHO_INT_FILHO_BYTES):((1)*TAMANHO_INT_FILHO_BYTES)])
-
-
         print("\n###[ Payload ]###\n")
         payload_final = tcp_payload[(TAMANHO_INT_PAI_BYTES+(TAMANHO_INT_FILHO_BYTES*quantidade_filhos)):]
         hexdump(payload_final)
 
-        #hexdump(pkt)
         sys.stdout.flush()
 
 def main():
