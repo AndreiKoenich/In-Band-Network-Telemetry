@@ -23,12 +23,9 @@ bind_layers(Ether, IP)
 bind_layers(IP, TCP)
 
 def bytes_to_bits_binary(byte_data):
-    # Calcula o número total de bits com base no comprimento dos bytes de entrada
-    total_bits = len(byte_data) * 8
-    # Converte os bytes para um inteiro, depois para uma string binária
-    bits_data = bin(int.from_bytes(byte_data, byteorder='big'))[2:]
-    # Adiciona zeros à esquerda para garantir que o comprimento da string binária seja igual ao número total de bits
-    bits_data = bits_data.zfill(total_bits)
+    total_bits = len(byte_data) * 8 # Calcula o número total de bits com base no comprimento dos bytes de entrada
+    bits_data = bin(int.from_bytes(byte_data, byteorder='big'))[2:] # Converte os bytes para um inteiro, depois para uma string binária
+    bits_data = bits_data.zfill(total_bits) # Adiciona zeros à esquerda para garantir que o comprimento da string binária seja igual ao número total de bits
     return bits_data
 
 def handle_pkt(pkt):
