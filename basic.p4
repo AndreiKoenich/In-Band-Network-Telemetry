@@ -5,6 +5,10 @@
 const bit<16> TYPE_INT_PAI = 0x1212;
 const bit<16> TYPE_IPV4 = 0x800;
 
+const bit<32> MTU = 1500;
+const bit<32> TAMANHO_INT_PAI_BYTES = 9;
+const bit<32> TAMANHO_INT_FILHO_BYTES = 13;
+
 /*************************************************************************
 *********************** H E A D E R S  ***********************************
 *************************************************************************/
@@ -58,6 +62,8 @@ header tcp_t{
 header int_pai_t {
     bit<32> Tamanho_Filho;
     bit<32> Quantidade_Filhos;
+    bit <1> MTU_overflow;
+    bit <7> padding; // O tamanho do cabecalho em bits deve ser multiplo de 8
 }
 
 header int_filho_t {
@@ -70,7 +76,7 @@ header int_filho_t {
 
 struct metadata {
     bit<48> ingress_timestamp;
-    bit<32> switch_id;
+    bit<32> packet_length;
 }
 
 struct headers {
@@ -150,12 +156,13 @@ control MyIngress(inout headers hdr,
     action add_int_pai() {
         hdr.int_pai.setValid();
         hdr.int_pai.Tamanho_Filho = 0;
-        hdr.int_pai.Quantidade_Filhos = 1;
+        hdr.int_pai.Quantidade_Filhos = 0;
+        hdr.int_pai.MTU_overflow = 0;
     }
 
     action update_int_pai() {
         hdr.int_pai.Quantidade_Filhos = hdr.int_pai.Quantidade_Filhos+1;
-        hdr.int_pai.Tamanho_Filho = hdr.int_pai.Quantidade_Filhos*13;
+        hdr.int_pai.Tamanho_Filho = hdr.int_pai.Quantidade_Filhos*TAMANHO_INT_FILHO_BYTES;
     }
 
     action add_int_filho(identifier id) {
@@ -193,15 +200,19 @@ control MyIngress(inout headers hdr,
             ipv4_lpm.apply();
         }
 
-        if (hdr.int_pai.isValid()) {
-            update_int_pai();
-        }
-
-        else {
+        if (!(hdr.int_pai.isValid())) {
             add_int_pai();
         }
 
-        new_int_filho.apply();
+        if (hdr.int_pai.MTU_overflow == 0) {
+            if ((standard_metadata.packet_length+TAMANHO_INT_FILHO_BYTES) < MTU) {
+                new_int_filho.apply();
+                update_int_pai();
+            }
+            else {
+                hdr.int_pai.MTU_overflow = 1;
+            }
+        }
     }
 }
 
