@@ -13,42 +13,14 @@ from scapy.all import (
     Packet,
     IP,
     TCP,
-    FieldLenField,
-    FieldListField,
-    BitField,
-    IntField,
-    LongField,
-    LEIntField,
-    IPOption,
-    ShortField,
     sniff,
     bind_layers,
     hexdump
 )
-from scapy.layers.inet import _IPOption_HDR
-
-class IntPai(Packet):
-    name = "IntPai"
-    fields_desc = [
-        IntField("Tamanho_Filho", 0),
-        IntField("Quantidade_Filhos", 0)
-    ]
-
-class IntFilho(Packet):
-    name = "IntFilho"
-    fields_desc = [
-        ShortField("ID_Switch", 0),
-        ShortField("Porta_Entrada", 0),
-        ShortField("Porta_Saida", 0),
-        ShortField("Timestamp", 0),
-        ShortField("Padding", 0)
-    ]
 
 # Bind dos cabeçalhos
 bind_layers(Ether, IP)
 bind_layers(IP, TCP)
-bind_layers(TCP, IntPai) # TCP para IntPai
-#bind_layers(IntPai, IntFilho) # TCP para IntPai
 
 def bytes_to_bits_binary(byte_data):
     # Calcula o número total de bits com base no comprimento dos bytes de entrada
@@ -68,11 +40,11 @@ def handle_pkt(pkt):
         print("\n###[ Ethernet ]###\n")
         print(f"\tdst = {eth_header.dst}")
         print(f"\tsrc = {eth_header.src}")
-        print(f"\ttype=  {hex(eth_header.type)}\n")
+        print(f"\ttype=  {hex(eth_header.type)}")
 
         # Imprime o cabeçalho IP
         ip_header = pkt[IP]
-        print("###[ IP ]###")
+        print("\n###[ IP ]###\n")
         print(f"\tversion = {ip_header.version}")
         print(f"\tihl = {ip_header.ihl}")
         print(f"\ttos = {ip_header.tos}")
