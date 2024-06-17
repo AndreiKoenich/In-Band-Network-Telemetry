@@ -205,7 +205,7 @@ control MyIngress(inout headers hdr,
         }
 
         if (hdr.int_pai.MTU_overflow == 0) {
-            if ((standard_metadata.packet_length+TAMANHO_INT_FILHO_BYTES) < MTU) {
+            if ((standard_metadata.packet_length+TAMANHO_INT_FILHO_BYTES) <= MTU) {
                 new_int_filho.apply();
                 update_int_pai();
             }
