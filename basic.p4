@@ -112,8 +112,8 @@ parser MyParser(packet_in packet,
 
     state parse_tcp {
         packet.extract(hdr.tcp);
-        transition select(hdr.ethernet.etherType) {
-            TYPE_INT_PAI: parse_pai;
+        transition select(hdr.ethernet.etherType) { // Verifica se o primeiro cabecalho int_pai ja foi inserido, analisando o conteudo do campo etherType
+            TYPE_INT_PAI: parse_pai; // Realiza a extracao do cabecalho int_pai
             TYPE_IPV4: accept;
             default: accept;
         }
@@ -133,7 +133,6 @@ control MyVerifyChecksum(inout headers hdr, inout metadata meta) {
     apply {  }
 }
 
-
 /*************************************************************************
 **************  I N G R E S S   P R O C E S S I N G   *******************
 *************************************************************************/
@@ -149,23 +148,23 @@ control MyIngress(inout headers hdr,
         standard_metadata.egress_spec = port;
         hdr.ethernet.srcAddr = hdr.ethernet.dstAddr;
         hdr.ethernet.dstAddr = dstAddr;
-        hdr.ethernet.etherType = TYPE_INT_PAI;
+        hdr.ethernet.etherType = TYPE_INT_PAI; // Indica que o pacote deve receber informacoes de telemetria
         hdr.ipv4.ttl = hdr.ipv4.ttl-1;
     }
 
-    action add_int_pai() {
+    action add_int_pai() { // Adiciona o cabecalho int_pai, caso ele nao tenha sido adicionado
         hdr.int_pai.setValid();
         hdr.int_pai.Tamanho_Filho = 0;
         hdr.int_pai.Quantidade_Filhos = 0;
         hdr.int_pai.MTU_overflow = 0;
     }
 
-    action update_int_pai() {
+    action update_int_pai() { // Atualiza os dados do cabecalho int_pai
         hdr.int_pai.Quantidade_Filhos = hdr.int_pai.Quantidade_Filhos+1;
         hdr.int_pai.Tamanho_Filho = hdr.int_pai.Quantidade_Filhos*TAMANHO_INT_FILHO_BYTES;
     }
 
-    action add_int_filho(identifier id) {
+    action add_int_filho(identifier id) { // Insere um novo cabecalho int_filho com informacoes de telemetria
         hdr.int_filho.setValid();
         hdr.int_filho.ID_Switch = id; // Configurado externamente
         hdr.int_filho.Porta_Entrada = standard_metadata.ingress_port;
@@ -200,16 +199,16 @@ control MyIngress(inout headers hdr,
             ipv4_lpm.apply();
         }
 
-        if (!(hdr.int_pai.isValid())) {
+        if (!(hdr.int_pai.isValid())) { // Adiciona o cabecalho int_pai, caso ele nao tenha sido adicionado
             add_int_pai();
         }
 
-        if (hdr.int_pai.MTU_overflow == 0) {
+        if (hdr.int_pai.MTU_overflow == 0) { // Somente adiciona um novo cabecalho se nao ultrapassar a MTU
             if ((standard_metadata.packet_length+TAMANHO_INT_FILHO_BYTES) <= MTU) {
-                new_int_filho.apply();
-                update_int_pai();
+                new_int_filho.apply(); // Insere um novo cabecalho int_filho com informacoes de telemetria
+                update_int_pai();      // Atualiza os dados do cabecalho int_pai
             }
-            else {
+            else { // Indica que nao sera mais possivel inserir novos cabecalhos de telemetria
                 hdr.int_pai.MTU_overflow = 1;
             }
         }
